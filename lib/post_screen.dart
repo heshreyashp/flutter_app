@@ -18,21 +18,37 @@ class _PostScreenState extends State<PostScreen>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this);
+    // Set up MethodChannel to receive data from native
+    const platform = MethodChannel('com.example.flutter_project_launcher');
+    platform.setMethodCallHandler((call) async {
+      if (call.method == 'receiveDataFromNative') {
+        String data = call.arguments;
+        print('Received data from native: $data');
+        setState(() {
+          receivedData = data;
+          // Update UI with received data
+          // For example, you could set a variable here to display the data in the UI
+        });
+      }else if (call.method == 'channel'){
+        String data = call.arguments;
+        print('Received data from native: $data');
+        setState(() {
+          channel = call.arguments;
+          // Update UI with received data
+          // For example, you could set a variable here to display the data in the UI
+        });
+      }
+    });
   }
 
-  void startFlutterProject() async {
-    try {
-      final String result = await platform.invokeMethod('startFlutterProject');
-      print(result);
-    } on PlatformException catch (e) {
-      print("Failed to start Flutter project: '${e.message}'.");
-    }
-  }
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
+  String receivedData = 'Username';
+  String channel = 'Select Channel';
 
   @override
   Widget build(BuildContext context) {
@@ -80,34 +96,39 @@ class _PostScreenState extends State<PostScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Your Name',
+                          receivedData,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Container(
-                          padding: EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Select a channel',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                        GestureDetector(
+                          onTap:() {
+                            startSelectChannel();
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  channel,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              Icon(
-                                Icons.arrow_forward,
-                                color: Colors.black,
-                              ),
-                            ],
+                                Icon(
+                                  Icons.arrow_forward,
+                                  color: Colors.black,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -118,14 +139,14 @@ class _PostScreenState extends State<PostScreen>
             ),
             Expanded(
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'What\'s on your mind?',
-                      border: InputBorder.none,
-                    ),
-                  ),
-                )),
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'What\'s on your mind?',
+                  border: InputBorder.none,
+                ),
+              ),
+            )),
             SizedBox(height: 20),
             Align(
               alignment: Alignment.bottomRight,
@@ -135,14 +156,13 @@ class _PostScreenState extends State<PostScreen>
                   onPressed: () {
                     startFlutterProject();
                   },
-                  child: Text(
-                      'Post',
+                  child: Text('Post',
                       style: TextStyle(
                         color: Colors.white,
-                      )
-                  ),
+                      )),
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.blue),
                   ),
                 ),
               ),
@@ -152,4 +172,25 @@ class _PostScreenState extends State<PostScreen>
       ),
     );
   }
+
+
+  void startSelectChannel() async {
+    try {
+      print("Flutter: select channel click");
+      final String result = await platform.invokeMethod('startSelectChannel');
+      print(result);
+    } on PlatformException catch (e) {
+      print("Failed to start Flutter project: '${e.message}'.");
+    }
+  }
+  void startFlutterProject() async {
+    try {
+      print("Flutter: post click");
+      final String result = await platform.invokeMethod('startFlutterProject');
+      print(result);
+    } on PlatformException catch (e) {
+      print("Failed to start Flutter project: '${e.message}'.");
+    }
+  }
+
 }
