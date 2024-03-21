@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 const platform = MethodChannel('com.example.flutter_project_launcher');
 
@@ -40,6 +43,7 @@ class _PostScreenState extends State<PostScreen>
       }
     });
   }
+  TextEditingController _textController = TextEditingController();
 
 
   @override
@@ -47,7 +51,7 @@ class _PostScreenState extends State<PostScreen>
     _controller.dispose();
     super.dispose();
   }
-  String receivedData = 'Username';
+  String receivedData = 'Shreyash ';
   String channel = 'Select Channel';
 
   @override
@@ -80,13 +84,19 @@ class _PostScreenState extends State<PostScreen>
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
+                      color: const Color(0xFFC97777),
                       border: Border.all(color: Colors.red, width: 2.0),
                       borderRadius: BorderRadius.circular(20),
                       // Set border radius to 20 for rounded corners
-                      image: DecorationImage(
-                        image: AssetImage('assets/profile_image.jpg'),
-                        // Add your image path here
-                        fit: BoxFit.cover,
+                    ),
+                    child: Center(
+                      child: Text(
+                        "HA",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -141,6 +151,7 @@ class _PostScreenState extends State<PostScreen>
                 child: Container(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: TextField(
+                controller: _textController,
                 decoration: InputDecoration(
                   hintText: 'What\'s on your mind?',
                   border: InputBorder.none,
@@ -185,12 +196,60 @@ class _PostScreenState extends State<PostScreen>
   }
   void startFlutterProject() async {
     try {
+      await fetchData();
       print("Flutter: post click");
-      final String result = await platform.invokeMethod('startFlutterProject');
-      print(result);
+      //final String inputText = _textController.text;
+     // final String result = await platform.invokeMethod('startFlutterProject', {"description": inputText});
+     // print(result);
     } on PlatformException catch (e) {
       print("Failed to start Flutter project: '${e.message}'.");
     }
+  }
+
+  Future<void> fetchData() async {
+
+    var headers = {
+      'Authorization': 'Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJTaHJleWFzaCBGb3VyU2V2ZW4iLCJsYXN0TmFtZSI6IlBhZGR5IHBhZGR5IHBhZGR5IHB4IiwiaWQiOjExMjYsImVtYWlsIjoic2hyZXlhc2gucEBodWJlbmdhZ2UuY29tIiwic3ViIjoiQlZyOFBnaE1xIiwiYWRtaW5fdHlwZSI6MSwibGFuZ0NvZGUiOiJlbiIsImlzQWRtaW4iOnRydWUsImlzRmlyc3RMb2dpbiI6ZmFsc2UsInByZWZlcnJlZE5hbWUiOiJTaHJleWFzaCBGb3VyU2V2ZW4iLCJleHAiOjE3MTE2MjE1NTh9.ZwjYjx9W7kB4P1-wxrDQYWJ8QwVD3gCbl9PWB8XRSVsshPso46HbvvSqW-cMZ9IlLMJr3Tms0NGbAskkiHGzWQ',
+      'deviceType': 'a',
+      'timezone': 'Asia/Kolkata',
+      'appVersion': '2.12.2_2011200141',
+      'tenant': 'client0',
+      'Content-Type': 'application/json',
+      'app': 'android',
+      'device': 'mobile',
+      'Accept': 'application/json',
+      'sessionId': 'a-6691d6fa-4022-411d-8a66-f889250a4ace-1709890371'
+    };
+    var request = http.Request('POST', Uri.parse('https://apiv2.demo-hubengage.com/app/social/posts'));
+   var body = json.encode({
+      "langCode": "en",
+      "postText": _textController.text,
+      "rawPostText": _textController.text,
+      "urlPreview": ""
+    });
+   request.body = body;
+    request.headers.addAll(headers);
+    var response = await http.post(
+      Uri.parse('https://apiv2.demo-hubengage.com/app/social/posts'),
+      headers: headers,
+      body: body,
+    );
+
+    print("statusCode");
+    // Check the response status code
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      // Successful request
+      print('POST request successful');
+      print('Successful Response body: ${response.body}  ${response.statusCode}  ');
+      final String result = await platform.invokeMethod('SuccessfulResponse');
+      print(result);
+
+    } else {
+      // Error handling
+      print('POST request failed with status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+    }
+
   }
 
 }
